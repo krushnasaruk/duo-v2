@@ -1,0 +1,357 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  CREATOR
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  profile Profile?
+
+  @@map("users")
+}
+
+model Profile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  fullName   String
+  avatarUrl  String?
+  bio        String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
+
+  @@map("profiles")
+}
+
+enum CourseStatus {
+  DRAFT
+  READY_FOR_REVIEW
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+model Course {
+  id                  String       @id @default(uuid())
+  creator_id          String
+  title               String
+  slug                String       @unique
+  short_description   String?
+  full_description    String?
+  tagline             String?
+  category            String?
+  subcategory         String?
+  difficulty          String?
+  language            String       @default("English")
+  target_audience     String?
+  estimated_duration  String?
+  prerequisites       String[]     @default([])
+  learning_objectives String[]     @default([])
+  skills_gained       String[]     @default([])
+  thumbnail_url       String?
+  status              CourseStatus @default(DRAFT)
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+  submitted_at        DateTime?
+
+  creator Profile        @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  modules CourseModule[]
+
+  @@map("courses")
+}
+
+model CourseModule {
+  id          String   @id @default(uuid())
+  course_id   String
+  title               String
+  description         String?
+  learning_objectives String[] @default([])
+  order_index         Int
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  course   Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lectures Lecture[]
+
+  @@map("course_modules")
+}
+
+model CourseGlossaryTerm {
+  id          String   @id @default(uuid())
+  course_id   String
+  term        String
+  definition  String   @db.Text
+  order_index Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@map("course_glossary_terms")
+}
+
+model Lecture {
+  id                 String   @id @default(uuid())
+  module_id          String
+  title              String
+  description        String?
+  objective          String?
+  learning_objectives String[] @default([])
+  duration           Int?
+  difficulty         String?
+  prerequisites      String[] @default([])
+  video_url          String?
+  video_storage_path String?
+  video_duration     Int?
+  thumbnail_url      String?
+  content            String?  @db.Text
+  order_index        Int
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  module      CourseModule       @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  resources   LectureResource[]
+  checkpoints CodingCheckpoint[]
+  quizzes     Quiz[]
+
+  @@map("lectures")
+}
+
+model LectureResource {
+  id           String   @id @default(uuid())
+  lecture_id   String
+  name         String
+  type         String
+  storage_path String?
+  external_url String?
+  file_size    Int?
+  created_at   DateTime @default(now())
+
+  lecture Lecture @relation(fields: [lecture_id], references: [id], onDelete: Cascade)
+
+  @@map("lecture_resources")
+}
+
+model CodingCheckpoint {
+  id                String   @id @default(uuid())
+  lecture_id        String
+  trigger_timestamp Int?
+  title             String
+  instructions      String
+  language          String   @default("Python")
+  starter_code      String?  @db.Text
+  xp_reward         Int      @default(0)
+  max_attempts      Int?
+  mandatory         Boolean  @default(true)
+  order_index       Int
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  lecture    Lecture              @relation(fields: [lecture_id], references: [id], onDelete: Cascade)
+  test_cases CheckpointTestCase[]
+  hints      CheckpointHint[]
+
+  @@map("coding_checkpoints")
+}
+
+model CheckpointTestCase {
+  id              String  @id @default(uuid())
+  checkpoint_id   String
+  input           String? @db.Text
+  expected_output String  @db.Text
+  is_hidden       Boolean @default(false)
+  order_index     Int
+
+  checkpoint CodingCheckpoint @relation(fields: [checkpoint_id], references: [id], onDelete: Cascade)
+
+  @@map("checkpoint_test_cases")
+}
+
+model CheckpointHint {
+  id            String @id @default(uuid())
+  checkpoint_id String
+  order_index   Int
+  content       String @db.Text
+
+  checkpoint CodingCheckpoint @relation(fields: [checkpoint_id], references: [id], onDelete: Cascade)
+
+  @@map("checkpoint_hints")
+}
+
+model Quiz {
+  id            String   @id @default(uuid())
+  lecture_id    String?
+  module_id     String?
+  title         String
+  description   String?
+  passing_score Int      @default(70)
+  xp_reward     Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  lecture   Lecture?       @relation(fields: [lecture_id], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id             String  @id @default(uuid())
+  quiz_id        String
+  question       String  @db.Text
+  type           String  @default("MCQ") // MCQ, TRUE_FALSE, PREDICT_OUTPUT
+  code           String? @db.Text
+  language       String? @default("Python")
+  options        Json? // Array of strings
+  correct_answer String // Stringified answer or index
+  explanation    String? @db.Text
+  order_index    Int
+
+  quiz Quiz @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
+}
+
+model Project {
+  id                  String   @id @default(uuid())
+  course_id           String
+  module_id           String?
+  title               String
+  description         String   @db.Text
+  difficulty          String?
+  estimated_time      Int?
+  category            String?
+  technologies        String[] @default([])
+  skills              String[] @default([])
+  prerequisites       String[] @default([])
+  learning_objectives String[] @default([])
+  expected_outcome    String?  @db.Text
+  project_mode        String   @default("GUIDED") // GUIDED, SEMI_GUIDED, OPEN
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  features   ProjectFeature[]
+  milestones ProjectMilestone[]
+  rubrics    ProjectRubric[]
+
+  @@map("projects")
+}
+
+model ProjectFeature {
+  id          String  @id @default(uuid())
+  project_id  String
+  title       String
+  description String? @db.Text
+  required    Boolean @default(true)
+  order_index Int
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("project_features")
+}
+
+model ProjectMilestone {
+  id                      String   @id @default(uuid())
+  project_id              String
+  title                   String
+  order_index             Int
+  instructions            String   @db.Text
+  requirements            String[] @default([])
+  objectives              String[] @default([])
+  coding_task             String?  @db.Text
+  submission_requirements String?  @db.Text
+  estimated_time          Int?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  project    Project             @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  resources  MilestoneResource[]
+  hints      MilestoneHint[]
+  test_cases MilestoneTestCase[]
+
+  @@map("project_milestones")
+}
+
+model MilestoneResource {
+  id           String   @id @default(uuid())
+  milestone_id String
+  name         String
+  type         String
+  storage_path String?
+  external_url String?
+  file_size    Int?
+  created_at   DateTime @default(now())
+
+  milestone ProjectMilestone @relation(fields: [milestone_id], references: [id], onDelete: Cascade)
+
+  @@map("milestone_resources")
+}
+
+model MilestoneHint {
+  id           String @id @default(uuid())
+  milestone_id String
+  order_index  Int
+  content      String @db.Text
+
+  milestone ProjectMilestone @relation(fields: [milestone_id], references: [id], onDelete: Cascade)
+
+  @@map("milestone_hints")
+}
+
+model MilestoneTestCase {
+  id              String  @id @default(uuid())
+  milestone_id    String
+  description     String?
+  input           String? @db.Text
+  expected_output String  @db.Text
+  is_hidden       Boolean @default(false)
+  order_index     Int
+
+  milestone ProjectMilestone @relation(fields: [milestone_id], references: [id], onDelete: Cascade)
+
+  @@map("milestone_test_cases")
+}
+
+model ProjectRubric {
+  id          String  @id @default(uuid())
+  project_id  String
+  criterion   String
+  description String? @db.Text
+  weight      Float   @default(1.0)
+  max_score   Int     @default(100)
+  order_index Int
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("project_rubrics")
+}
+
+model CourseEvent {
+  id         String   @id @default(uuid())
+  course_id  String
+  creator_id String
+  event_type String
+  metadata   Json?
+  created_at DateTime @default(now())
+
+  @@map("course_events")
+}
