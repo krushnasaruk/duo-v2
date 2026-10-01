@@ -1,8 +1,9 @@
-import type { Course, CreateCourseInput } from '@codequest/shared';
+import type { Course, CreateCourseInput, ReviewHistoryRecord } from '@codequest/shared';
 import type { ICourseRepository } from './course.repository';
 
 // In-memory array acting as our database (exported for admin access in development)
 export const coursesMemory: Course[] = [];
+export const reviewHistoryMemory: ReviewHistoryRecord[] = [];
 
 /**
  * Temporary development repository that stores data in process memory.

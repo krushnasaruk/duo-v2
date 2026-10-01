@@ -25,6 +25,17 @@ export interface Course {
   glossary?: { id?: string; term: string; definition: string; relatedTerms: string[] }[];
   thumbnailUrl?: string | null;
   status: CourseStatus;
+  reviewFeedback?: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+}
+
+export type ReviewDecision = 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
+
+export interface ReviewHistoryRecord {
+  id: string;
+  courseId: string;
+  decision: ReviewDecision;
+  feedback?: string | null;
+  createdAt: Date | string;
 }

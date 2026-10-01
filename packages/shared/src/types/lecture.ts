@@ -14,6 +14,19 @@ export type LectureContentBlock =
       id: string;
       type: 'CALLOUT';
       content: string;
+    }
+  | {
+      id: string;
+      type: 'WORKED_EXAMPLE';
+      title: string;
+      problem: string;
+      steps: { title: string; id: string; explanation: string; code?: string }[];
+    }
+  | {
+      id: string;
+      type: 'COMMON_MISTAKES';
+      title: string;
+      mistakes: { id: string; mistake: string; correction: string; explanation: string; }[];
     };
 
 export interface LectureVideo {

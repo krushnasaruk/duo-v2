@@ -6,7 +6,9 @@ export interface QuizOption {
 export interface QuizQuestion {
   id: string;
   quizId: string;
-  type: 'MCQ' | 'TRUE_FALSE';
+  type: 'MCQ' | 'TRUE_FALSE' | 'PREDICT_OUTPUT';
+  code?: string;
+  language?: string;
   question: string;
   options: QuizOption[];
   correctOptionId: string;

@@ -13,6 +13,16 @@ export function useAdminReviewQueue() {
   });
 }
 
+export function useAdminAllCourses() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['admin', 'all-courses'],
+    queryFn: () => adminService.getAllCourses(user?.role || ''),
+    enabled: !!user && user.role === 'ADMIN'
+  });
+}
+
 export function useReviewCourseAction() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -23,6 +33,8 @@ export function useReviewCourseAction() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'review-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'all-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'review-course', variables.courseId] });
       queryClient.invalidateQueries({ queryKey: ['courses', variables.courseId] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
     }
@@ -40,8 +52,9 @@ export function useAdminReviewCourse(courseId: string) {
       // Fetch full hierarchy as the creator to reuse the creator's complex assembly logic
       const hierarchy = await courseValidationService.getCompleteCourseHierarchy(courseId, course.creatorId);
       const validation = await courseValidationService.validateCourse(courseId, course.creatorId);
+      const reviewHistory = await adminService.getCourseReviewHistory(courseId, user?.role || '');
       
-      return { hierarchy, validation };
+      return { hierarchy, validation, reviewHistory };
     },
     enabled: !!user && user.role === 'ADMIN' && !!courseId
   });
