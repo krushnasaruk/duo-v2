@@ -1,16 +1,16 @@
 import { useEffect, useRef } from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
 
 export function useAutosave(
   methods: UseFormReturn<any>,
   saveFn: (data: any) => Promise<void>,
   delay: number = 2000
 ) {
-  const { watch, formState: { isDirty, isValid } } = methods;
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { watch, formState: { isDirty } } = methods;
+  const timeoutRef = useRef<any>(null);
 
   useEffect(() => {
-    const subscription = watch((value, { name, type }) => {
+    const subscription = watch(() => {
       // Clear existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

@@ -87,9 +87,9 @@ export function LectureBuilder() {
     } else if (type === 'CALLOUT') {
       appendContent({ id: crypto.randomUUID(), type, content: '' });
     } else if (type === 'WORKED_EXAMPLE') {
-      appendContent({ id: crypto.randomUUID(), type, title: '', content: '', code: '' });
+      appendContent({ id: crypto.randomUUID(), type, title: '', problem: '', steps: [{ id: crypto.randomUUID(), title: 'Step 1', explanation: '', code: '' }] } as any);
     } else if (type === 'COMMON_MISTAKES') {
-      appendContent({ id: crypto.randomUUID(), type, mistake: '', correction: '' });
+      appendContent({ id: crypto.randomUUID(), type, title: 'Common Mistakes', mistakes: [{ id: crypto.randomUUID(), mistake: '', explanation: 'Explanation...', correction: '' }] } as any);
     }
   };
 
@@ -361,49 +361,68 @@ export function LectureBuilder() {
                   <label className="block text-xs font-semibold text-purple-600 uppercase">Worked Example</label>
                   <input
                     type="text"
-                    {...register(`content.${fieldIdx}.title`)}
+                    {...register(`content.${fieldIdx}.title` as any)}
                     placeholder="Example Title..."
                     className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 text-sm outline-none font-medium"
                   />
                   {errors.content?.[fieldIdx] && (errors.content[fieldIdx] as any)?.title && <p className="text-red-500 text-xs mt-1">{(errors.content[fieldIdx] as any)?.title?.message as string}</p>}
                   <textarea
-                    {...register(`content.${fieldIdx}.content`)}
+                    {...register(`content.${fieldIdx}.problem` as any)}
                     rows={2}
-                    placeholder="Explanation of the example..."
+                    placeholder="Problem statement..."
                     className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 outline-none text-sm"
                   />
-                  {errors.content?.[fieldIdx] && (errors.content[fieldIdx] as any)?.content && <p className="text-red-500 text-xs mt-1">{(errors.content[fieldIdx] as any)?.content?.message as string}</p>}
-                  <textarea
-                    {...register(`content.${fieldIdx}.code`)}
-                    rows={3}
-                    placeholder="Code snippet (optional)..."
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 outline-none font-mono text-sm bg-gray-900 text-gray-100"
-                  />
+                  {errors.content?.[fieldIdx] && (errors.content[fieldIdx] as any)?.problem && <p className="text-red-500 text-xs mt-1">{(errors.content[fieldIdx] as any)?.problem?.message as string}</p>}
+                  
+                  <div className="pl-4 border-l-2 border-purple-200 space-y-2 mt-2">
+                     <input type="text" {...register(`content.${fieldIdx}.steps.0.title` as any)} placeholder="Step Title" className="w-full px-3 py-2 border rounded-md text-sm outline-none" />
+                     <textarea
+                       {...register(`content.${fieldIdx}.steps.0.explanation` as any)}
+                       rows={2}
+                       placeholder="Explanation of the step..."
+                       className="w-full px-3 py-2 border rounded-md outline-none text-sm"
+                     />
+                     <textarea
+                       {...register(`content.${fieldIdx}.steps.0.code` as any)}
+                       rows={3}
+                       placeholder="Code snippet (optional)..."
+                       className="w-full px-3 py-2 border rounded-md outline-none font-mono text-sm bg-gray-900 text-gray-100"
+                     />
+                  </div>
                 </div>
               )}
               {field.type === 'COMMON_MISTAKES' && (
                 <div className="space-y-3">
                   <label className="block text-xs font-semibold text-orange-600 uppercase">Common Mistake</label>
+                  <input type="text" {...register(`content.${fieldIdx}.title` as any)} placeholder="Title (e.g. Common Syntax Errors)" className="w-full px-3 py-2 border rounded-md text-sm outline-none mb-2" />
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">The Mistake</label>
                       <textarea
-                        {...register(`content.${fieldIdx}.mistake`)}
+                        {...register(`content.${fieldIdx}.mistakes.0.mistake` as any)}
                         rows={3}
                         placeholder="Describe the common mistake..."
                         className="w-full px-3 py-2 border border-red-200 bg-red-50/30 rounded-md focus:ring-2 focus:ring-red-500/20 outline-none text-sm"
                       />
-                      {errors.content?.[fieldIdx] && (errors.content[fieldIdx] as any)?.mistake && <p className="text-red-500 text-xs mt-1">{(errors.content[fieldIdx] as any)?.mistake?.message as string}</p>}
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">The Correction</label>
                       <textarea
-                        {...register(`content.${fieldIdx}.correction`)}
+                        {...register(`content.${fieldIdx}.mistakes.0.correction` as any)}
                         rows={3}
                         placeholder="Explain how to fix it..."
                         className="w-full px-3 py-2 border border-green-200 bg-green-50/30 rounded-md focus:ring-2 focus:ring-green-500/20 outline-none text-sm"
                       />
-                      {errors.content?.[fieldIdx] && (errors.content[fieldIdx] as any)?.correction && <p className="text-red-500 text-xs mt-1">{(errors.content[fieldIdx] as any)?.correction?.message as string}</p>}
+                    </div>
+                    <div className="col-span-2">
+                       <label className="block text-xs text-gray-500 mb-1">Explanation</label>
+                       <textarea
+                         {...register(`content.${fieldIdx}.mistakes.0.explanation` as any)}
+                         rows={2}
+                         placeholder="Why does this mistake happen..."
+                         className="w-full px-3 py-2 border rounded-md outline-none text-sm"
+                       />
                     </div>
                   </div>
                 </div>
